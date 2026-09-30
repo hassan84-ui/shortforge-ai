@@ -81,9 +81,17 @@ Return ONLY valid JSON in this exact structure:
 
   const d=await r.json();
 
-  if(!r.ok)return json(res,r.status,{
-    error:d?.error?.message||'OpenAI generation failed'
-  });
+  if(!r.ok){
+    console.error('OpenAI API error',{
+      status:r.status,
+      type:d?.error?.type||null,
+      code:d?.error?.code||null,
+      message:d?.error?.message||'OpenAI generation failed'
+    });
+    return json(res,r.status,{
+      error:d?.error?.message||'OpenAI generation failed'
+    });
+  }
 
   const output=d.output_text||
     d.output?.flatMap(x=>x.content||[])
