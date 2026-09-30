@@ -22,5 +22,101 @@ if(req.method==='GET'&&u.pathname==='/api/me'){const user=requireUser(req,res);i
 if(u.pathname==='/api/projects'&&req.method==='GET'){const user=requireUser(req,res);if(!user)return;return json(res,200,{projects:db.projects.filter(x=>x.userId===user.id).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)).map(({data,...x})=>x)})}
 if(u.pathname==='/api/projects'&&req.method==='POST'){const user=requireUser(req,res);if(!user)return;const b=await readBody(req);if(!b.project||typeof b.project!=='object')return json(res,400,{error:'Project data is required'});const now=new Date().toISOString(),p={id:uid(),userId:user.id,name:String(b.name||b.project.idea||'Untitled short').slice(0,100),createdAt:now,updatedAt:now,data:b.project};db.projects.push(p);save();return json(res,201,{project:{id:p.id,name:p.name,createdAt:p.createdAt,updatedAt:p.updatedAt}})}
 const pm=u.pathname.match(/^\/api\/projects\/([a-f0-9-]+)$/i);if(pm&&req.method==='GET'){const user=requireUser(req,res);if(!user)return;const p=db.projects.find(x=>x.id===pm[1]&&x.userId===user.id);return p?json(res,200,{project:p}):json(res,404,{error:'Project not found'})}if(pm&&req.method==='PUT'){const user=requireUser(req,res);if(!user)return;const p=db.projects.find(x=>x.id===pm[1]&&x.userId===user.id);if(!p)return json(res,404,{error:'Project not found'});const b=await readBody(req);p.name=String(b.name||p.name).slice(0,100);if(b.project)p.data=b.project;p.updatedAt=new Date().toISOString();save();return json(res,200,{project:{id:p.id,name:p.name,updatedAt:p.updatedAt}})}if(pm&&req.method==='DELETE'){const user=requireUser(req,res);if(!user)return;const n=db.projects.length;db.projects=db.projects.filter(x=>!(x.id===pm[1]&&x.userId===user.id));if(db.projects.length===n)return json(res,404,{error:'Project not found'});save();return json(res,200,{ok:true})}
-if(req.method==='POST'&&u.pathname==='/api/generate'){const user=requireUser(req,res);if(!user)return;const q=usage(user.id,'ai');if(!q.ok)return json(res,429,{error:'Daily generation limit reached',quota:q});return json(res,200,{provider:'local-template',project:localProject(await readBody(req))})}if(req.method==='POST'&&u.pathname==='/api/tts'){const user=requireUser(req,res);if(!user)return tts(await readBody(req),res,user)}if(req.method==='GET'&&u.pathname==='/api/media'){const user=requireUser(req,res);if(!user)return mediaSearch(u,res,user)}if(req.method==='GET'&&u.pathname==='/api/media-proxy')return proxyMedia(u,res);if(req.method==='POST'&&u.pathname==='/api/render'){const user=requireUser(req,res);if(!user)return renderMp4(req,res,user)}
+if(req.method==='POST'&&u.pathname==='/api/generate'){
+  const user=requireUser(req,res);
+  if(!user)return;
+
+  const q=usage(user.id,'ai');
+  if(!q.ok)return json(res,429,{
+    error:'Daily generation limit reached',
+    quota:q
+  });
+
+  const b=await readBody(req);
+  const key=process.env.OPENAI_API_KEY;
+
+  if(!key)return json(res,503,{
+    error:'OpenAI API key is not configured'
+  });
+
+  const prompt=`Create a high-retention vertical short-form video.
+
+Topic: ${String(b.idea||'')}
+Style: ${String(b.style||'Motivation')}
+Tone: ${String(b.tone||'Inspiring')}
+Duration: ${Number(b.duration||30)} seconds.
+
+Create:
+- A powerful opening hook
+- A natural voice-over script
+- Short caption lines
+- Timed scenes
+- A useful visual description for every scene
+
+Return ONLY valid JSON in this exact structure:
+{
+  "hook": "string",
+  "script": "string",
+  "lines": ["string"],
+  "scenes": [
+    {
+      "caption": "string",
+      "visual": "string",
+      "seconds": 6
+    }
+  ]
+}`;
+
+  const r=await fetch('https://api.openai.com/v1/responses',{
+    method:'POST',
+    headers:{
+      'Authorization':'Bearer '+key,
+      'Content-Type':'application/json'
+    },
+    body:JSON.stringify({
+      model:'gpt-5-mini',
+      input:prompt
+    })
+  });
+
+  const d=await r.json();
+
+  if(!r.ok)return json(res,r.status,{
+    error:d?.error?.message||'OpenAI generation failed'
+  });
+
+  const output=d.output_text||
+    d.output?.flatMap(x=>x.content||[])
+      .map(x=>x.text||'')
+      .join('')||'';
+
+  let ai;
+
+  try{
+    ai=JSON.parse(
+      output
+        .replace(/^```json\s*/i,'')
+        .replace(/```$/,'')
+        .trim()
+    );
+  }catch{
+    return json(res,502,{
+      error:'AI returned an invalid response. Please try again.'
+    });
+  }
+
+  return json(res,200,{
+    provider:'openai',
+    project:{
+      idea:String(b.idea||''),
+      style:String(b.style||'Motivation'),
+      tone:String(b.tone||'Inspiring'),
+      duration:Number(b.duration||30),
+      hook:String(ai.hook||''),
+      script:String(ai.script||''),
+      lines:Array.isArray(ai.lines)?ai.lines:[],
+      scenes:Array.isArray(ai.scenes)?ai.scenes:[]
+    }
+  });
+}if(req.method==='POST'&&u.pathname==='/api/tts'){const user=requireUser(req,res);if(!user)return tts(await readBody(req),res,user)}if(req.method==='GET'&&u.pathname==='/api/media'){const user=requireUser(req,res);if(!user)return mediaSearch(u,res,user)}if(req.method==='GET'&&u.pathname==='/api/media-proxy')return proxyMedia(u,res);if(req.method==='POST'&&u.pathname==='/api/render'){const user=requireUser(req,res);if(!user)return renderMp4(req,res,user)}
 if(req.method!=='GET')return json(res,405,{error:'Method not allowed'});const rel=decodeURIComponent(u.pathname==='/'?'index.html':u.pathname.startsWith('/')?u.pathname.slice(1):u.pathname);const file=path.resolve(root,rel);if(file!==root&&!file.startsWith(root+path.sep))return json(res,403,{error:'Forbidden'});fs.stat(file,(err,st)=>{if(err||!st.isFile()){console.error('Static file not found:',file);res.writeHead(404,{'content-type':'text/plain; charset=utf-8'});return res.end('Not found')}res.writeHead(200,{'content-type':types[path.extname(file)]||'application/octet-stream','x-content-type-options':'nosniff','referrer-policy':'strict-origin-when-cross-origin'});fs.createReadStream(file).pipe(res)})}catch(e){console.error(e);json(res,500,{error:e.message||'Server error'})}});server.listen(PORT,()=>console.log(`ShortForge AI Studio: http://localhost:${PORT}`));
