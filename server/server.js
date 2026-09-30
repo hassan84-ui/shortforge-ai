@@ -23,7 +23,7 @@ if(u.pathname==='/api/projects'&&req.method==='GET'){const user=requireUser(req,
 if(u.pathname==='/api/projects'&&req.method==='POST'){const user=requireUser(req,res);if(!user)return;const b=await readBody(req);if(!b.project||typeof b.project!=='object')return json(res,400,{error:'Project data is required'});const now=new Date().toISOString(),p={id:uid(),userId:user.id,name:String(b.name||b.project.idea||'Untitled short').slice(0,100),createdAt:now,updatedAt:now,data:b.project};db.projects.push(p);save();return json(res,201,{project:{id:p.id,name:p.name,createdAt:p.createdAt,updatedAt:p.updatedAt}})}
 const pm=u.pathname.match(/^\/api\/projects\/([a-f0-9-]+)$/i);if(pm&&req.method==='GET'){const user=requireUser(req,res);if(!user)return;const p=db.projects.find(x=>x.id===pm[1]&&x.userId===user.id);return p?json(res,200,{project:p}):json(res,404,{error:'Project not found'})}if(pm&&req.method==='PUT'){const user=requireUser(req,res);if(!user)return;const p=db.projects.find(x=>x.id===pm[1]&&x.userId===user.id);if(!p)return json(res,404,{error:'Project not found'});const b=await readBody(req);p.name=String(b.name||p.name).slice(0,100);if(b.project)p.data=b.project;p.updatedAt=new Date().toISOString();save();return json(res,200,{project:{id:p.id,name:p.name,updatedAt:p.updatedAt}})}if(pm&&req.method==='DELETE'){const user=requireUser(req,res);if(!user)return;const n=db.projects.length;db.projects=db.projects.filter(x=>!(x.id===pm[1]&&x.userId===user.id));if(db.projects.length===n)return json(res,404,{error:'Project not found'});save();return json(res,200,{ok:true})}
 if(req.method==='POST'&&u.pathname==='/api/generate'){
-  const user=requireUser(req,res);-
+  const user=requireUser(req,res);
   if(!user)return;
 
   const q=usage(user.id,'ai');
