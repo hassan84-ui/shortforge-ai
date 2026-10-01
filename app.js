@@ -103,9 +103,9 @@ updateReadiness();
    if(!window.shortForgeBackend?.online){return localGenerate.call(gen)}
    const payload={idea:$('#idea').value.trim(),style:$('#style').value,tone:tone,duration:Number($('#duration').value)};
    if(!payload.idea)return alert('Enter a video idea first.');
-   gen.disabled=true;const old=gen.textContent;gen.textContent='Generating…';
+   gen.disabled=true;const idleLabel='Generate Short';gen.textContent='Generating…';
    try{const data=await ShortForgeAPI.generate(payload);if(data.project){project=data.project;render();showScene();persistProject()}else localGenerate.call(gen)}
-   catch(e){console.warn(e);localGenerate.call(gen)}finally{gen.disabled=false;gen.textContent=old}
+   catch(e){console.warn(e);localGenerate.call(gen)}finally{gen.disabled=false;gen.textContent=idleLabel}
  }}
  const box=document.querySelector('.editorHead');if(box){const badge=document.createElement('span');badge.className='v7badge';badge.textContent='v7';box.appendChild(badge)}
 })();
