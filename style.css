@@ -36,3 +36,6 @@ main>*{min-width:0}
   .video{width:100%;height:auto;aspect-ratio:9/16}
   .editor{margin-top:20px}
 }
+
+/* Launch UX polish */
+.launchSteps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:-12px 0 24px}.launchSteps span{font-size:11px;font-weight:750;color:#b8c2d4;background:#0b1019;border:1px solid #293143;border-radius:10px;padding:9px 10px}.primary:hover{filter:brightness(1.08)}button:disabled{opacity:.55;cursor:not-allowed}.stockCard{transition:transform .15s ease,border-color .15s ease}.stockCard:hover{transform:translateY(-2px);border-color:#7251ff}.actions{flex-wrap:wrap}.actions button{flex:1 1 130px}.exportStatus.done{padding:10px 12px;border:1px solid #166534;background:#052e1b;border-radius:10px;color:#86efac}footer{line-height:1.7}footer b{color:#9b7cff}footer span{color:#465066}@media(max-width:500px){.launchSteps{grid-template-columns:1fr 1fr}}
