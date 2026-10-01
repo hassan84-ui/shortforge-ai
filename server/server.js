@@ -126,5 +126,12 @@ Return ONLY valid JSON in this exact structure:
       scenes:Array.isArray(ai.scenes)?ai.scenes:[]
     }
   });
-}if(req.method==='POST'&&u.pathname==='/api/tts'){const user=requireUser(req,res);if(!user)return tts(await readBody(req),res,user)}if(req.method==='GET'&&u.pathname==='/api/media'){const user=requireUser(req,res);if(!user)return mediaSearch(u,res,user)}if(req.method==='GET'&&u.pathname==='/api/media-proxy')return proxyMedia(u,res);if(req.method==='POST'&&u.pathname==='/api/render'){const user=requireUser(req,res);if(!user)return renderMp4(req,res,user)}
+}
+if(req.method==='POST'&&u.pathname==='/api/tts'){
+  const user=requireUser(req,res);
+  if(!user)return;
+  const body=await readBody(req);
+  return await tts(body,res,user);
+}
+if(req.method==='GET'&&u.pathname==='/api/media'){const user=requireUser(req,res);if(!user)return mediaSearch(u,res,user)}if(req.method==='GET'&&u.pathname==='/api/media-proxy')return proxyMedia(u,res);if(req.method==='POST'&&u.pathname==='/api/render'){const user=requireUser(req,res);if(!user)return renderMp4(req,res,user)}
 if(req.method!=='GET')return json(res,405,{error:'Method not allowed'});const rel=decodeURIComponent(u.pathname==='/'?'index.html':u.pathname.startsWith('/')?u.pathname.slice(1):u.pathname);const file=path.resolve(root,rel);if(file!==root&&!file.startsWith(root+path.sep))return json(res,403,{error:'Forbidden'});fs.stat(file,(err,st)=>{if(err||!st.isFile()){console.error('Static file not found:',file);res.writeHead(404,{'content-type':'text/plain; charset=utf-8'});return res.end('Not found')}res.writeHead(200,{'content-type':types[path.extname(file)]||'application/octet-stream','x-content-type-options':'nosniff','referrer-policy':'strict-origin-when-cross-origin'});fs.createReadStream(file).pipe(res)})}catch(e){console.error(e);json(res,500,{error:e.message||'Server error'})}});server.listen(PORT,()=>console.log(`ShortForge AI Studio: http://localhost:${PORT}`));
