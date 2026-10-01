@@ -1,0 +1,14 @@
+{
+  "expo":{
+    "name":"ShortForge AI",
+    "slug":"shortforge-ai",
+    "version":"1.0.0",
+    "orientation":"portrait",
+    "scheme":"shortforge",
+    "userInterfaceStyle":"dark",
+    "ios":{"supportsTablet":true,"bundleIdentifier":"com.shortforge.ai"},
+    "android":{"package":"com.shortforge.ai","adaptiveIcon":{"backgroundColor":"#0b1020"}},
+    "plugins":["expo-router"],
+    "extra":{"router":{}}
+  }
+}
