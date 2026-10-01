@@ -32,7 +32,7 @@ if(req.method==='POST'&&u.pathname==='/api/generate'){
   const user=requireUser(req,res);
   if(!user)return;
 
-  const q=usage(user.id,'ai');
+  const q=await checkUsage(user,'ai');
   if(!q.ok)return json(res,429,{
     error:'Daily generation limit reached',
     quota:q
