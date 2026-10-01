@@ -169,4 +169,4 @@ updateReadiness();
  const wait=setInterval(()=>{if(window.shortForgeBackend){clearInterval(wait);user=window.shortForgeBackend.user||null;updateAccount()}},100);updateAccount();
 })();
 
-window.addEventListener('DOMContentLoaded',()=>restoreNarrationBlob());
+if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',restoreNarrationBlob);else restoreNarrationBlob();
